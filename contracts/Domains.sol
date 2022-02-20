@@ -23,8 +23,15 @@ contract Domains is ERC721URIStorage {
 
     mapping(string => address) public domains;
     mapping(string => string) public records;
+    mapping(uint256 => string) public names;
 
-    constructor(string memory _tld) payable ERC721("Jutsu Name Service", "JNS")
+    error Unauthorized();
+    error AlreadyRegistered();
+    error InvalidName(string name);
+
+    constructor(string memory _tld)
+        payable
+        ERC721("Jutsu Name Service", "JNS")
     {
         owner = payable(msg.sender);
         tld = _tld;
@@ -32,7 +39,8 @@ contract Domains is ERC721URIStorage {
     }
 
     function register(string calldata name) public payable {
-        require(domains[name] == address(0));
+        if (domains[name] != address(0)) revert AlreadyRegistered();
+        if (!valid(name)) revert InvalidName(name);
 
         uint256 _price = price(name);
         require(msg.value >= _price, "Not enough Matic paid");
@@ -88,6 +96,7 @@ contract Domains is ERC721URIStorage {
         domains[name] = msg.sender;
 
         _tokenIds.increment();
+        names[newRecordId] = name;
     }
 
     function price(string calldata name) public pure returns (uint256) {
@@ -96,7 +105,7 @@ contract Domains is ERC721URIStorage {
         if (len == 3) {
             return 5 * 10**17;
         } else if (len == 4) {
-            return 3 * 10**17; 
+            return 3 * 10**17;
         } else {
             return 1 * 10**17;
         }
@@ -107,7 +116,7 @@ contract Domains is ERC721URIStorage {
     }
 
     function setRecord(string calldata name, string calldata record) public {
-        require(domains[name] == msg.sender);
+        if (msg.sender != domains[name]) revert Unauthorized();
         records[name] = record;
     }
 
@@ -117,6 +126,21 @@ contract Domains is ERC721URIStorage {
         returns (string memory)
     {
         return records[name];
+    }
+
+    function getAllNames() public view returns (string[] memory) {
+        console.log("Getting all names from contract");
+        string[] memory allNames = new string[](_tokenIds.current());
+        for (uint256 i = 0; i < _tokenIds.current(); i++) {
+            allNames[i] = names[i];
+            console.log("Name for token %d is %s", i, allNames[i]);
+        }
+
+        return allNames;
+    }
+
+    function valid(string calldata name) public pure returns (bool) {
+        return StringUtils.strlen(name) >= 3 && StringUtils.strlen(name) <= 15;
     }
 
     modifier onlyOwner() {
