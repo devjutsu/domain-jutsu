@@ -7,7 +7,7 @@ const main = async () => {
     console.log("Contract deployed to:", domainContract.address);
     console.log("Contract owner:", owner.address);
 
-    let txn = await domainContract.register("a16z", { value: hre.ethers.utils.parseEther('1234') });
+    let txn = await domainContract.register("dev", { value: hre.ethers.utils.parseEther('0.5') });
     await txn.wait();
 
     // How much money is in here?
@@ -15,12 +15,12 @@ const main = async () => {
     console.log("Contract balance:", hre.ethers.utils.formatEther(balance));
 
     // Quick! Grab the funds from the contract! (as superCoder)
-    try {
-        txn = await domainContract.connect(superCoder).withdraw();
-        await txn.wait();
-    } catch (error) {
-        console.log("Could not rob contract");
-    }
+    // try {
+    //     txn = await domainContract.connect(superCoder).withdraw();
+    //     await txn.wait();
+    // } catch (error) {
+    //     console.log("Could not rob contract");
+    // }
 
     // Let's look in their wallet so we can compare later
     let ownerBalance = await hre.ethers.provider.getBalance(owner.address);
